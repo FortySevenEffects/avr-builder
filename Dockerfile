@@ -3,61 +3,75 @@
 
 FROM debian:jessie
 
-ENV PATH $PATH:/usr/local/avr/bin
+ENV PATH $PATH:/usr/local/avr/bin:/usr/local/bin
 
-# Simple: install from packages 
+RUN apt-get update && apt-get install -y --no-install-recommends                \
+            build-essential                                                     \
+            ca-certificates                                                     \
+            libgmp3-dev                                                         \
+            libmpc-dev                                                          \
+            libmpfr-dev                                                         \
+            make                                                                \
+            wget
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    make            \
-    cmake           \
-    avr-libc        \
-    avrdude         \
-    binutils-avr    \
-    gcc-avr         \
+# CMake Layer
+RUN echo "\033[1;32mInstalling CMake...\033[0m"                                 \
+ && wget -q https://cmake.org/files/v3.7/cmake-3.7.2-Linux-x86_64.sh            \
+ && mkdir -p /opt/cmake                                                         \
+ && sh cmake-3.7.2-Linux-x86_64.sh --prefix=/opt/cmake --skip-license           \
+ && ln -s /opt/cmake/bin/cmake /usr/local/bin/cmake                             \
+ && rm cmake-3.7.2-Linux-x86_64.sh                                              \
+ && cmake --version
 
-# Variant: build from source
+# Binutils layer
+RUN echo "\033[1;32mBuilding binutils...\033[0m"                                \
+ && wget -qO- http://ftp.gnu.org/gnu/binutils/binutils-2.28.tar.bz2 | tar -xj   \
+ && cd binutils-2.28                                                            \
+ && mkdir build && cd build                                                     \
+ && ../configure --prefix=/usr/local/avr --target=avr --disable-nls             \
+ && make && make install                                                        \
+ && cd ../.. && rm -rf binutils-2.28                                            \
+ && avr-ld      -V                                                              \
+ && avr-objdump --version                                                       \
+ && avr-objcopy --version                                                       \
+ && avr-size    --version
 
-# RUN \
-#     #### install build tools ####
-#     apt-get install -y --no-install-recommends \
-#                               wget                               \
-#                               make                               \
-#                               build-essential                    \
-#                               libmpc-dev                         \
-#                               libmpfr-dev                        \
-#                               libgmp3-dev                        \
-#  && mkdir /usr/local/avr /opt/distr && cd /opt/distr \
-#     #### build and install cmake-3.7.2 ####
-#  && echo "\033[1;32mBuilding CMake...\033[0m" \
-#  && wget https://cmake.org/files/v3.7/cmake-3.7.2.tar.gz --no-check-certificate \
-#  && tar -zxvf cmake-3.7.2.tar.gz && cd cmake-3.7.2 \
-#  && ./bootstrap && make && make install && cd .. \
-#     #### build and install binutils-2.28 ####
-#  && echo "\033[1;32mBuilding binutils...\033[0m" \
-#  && wget http://ftp.gnu.org/gnu/binutils/binutils-2.28.tar.bz2 \
-#  && bunzip2 -c binutils-2.28.tar.bz2 | tar xf - && cd binutils-2.28 \
-#  && mkdir build && cd build \
-#  && ../configure --prefix=/usr/local/avr --target=avr --disable-nls \
-#  && make && make install && cd ../.. \
-#     #### build and install gcc-6.3.0 ####
-#  && echo "\033[1;32mBuilding GCC...\033[0m" \
-#  && wget ftp://ftp.lip6.fr/pub/gcc/releases/gcc-6.3.0/gcc-6.3.0.tar.bz2 \
-#  && bunzip2 -c gcc-6.3.0.tar.bz2 | tar xf - && cd gcc-6.3.0 \
-#  && mkdir build && cd build \
-#  && ../configure --prefix=/usr/local/avr --target=avr --enable-languages=c,c++ --disable-nls --disable-libssp --with-dwarf2 \
-#  && make && make install && cd ../.. \
-#     #### build and install libc-2.0.0 ####
-#  && echo "\033[1;32mBuilding AVR libc...\033[0m" \
-#  && wget http://download.savannah.gnu.org/releases/avr-libc/avr-libc-2.0.0.tar.bz2 \
-#  && bunzip2 -c avr-libc-2.0.0.tar.bz2 | tar xf - && cd avr-libc-2.0.0 \
-#  && ./configure --prefix=/usr/local/avr --build=`./config.guess` --host=avr \
-#  && make && make install && cd .. \
-#     #### clean up the image ####
-#  && echo "\033[1;32mCleaning up...\033[0m" \
-#  && cd .. && rm -rf distr   \
-#  && apt-get remove -y       \
-#             wget            \
-#             build-essential \
-#  && apt-get autoremove -y   \
-#  && apt-get clean           \
-#  && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+# AVR-GCC Layer
+RUN echo "\033[1;32mBuilding AVR-GCC...\033[0m"                                 \
+ && wget -O- ftp://ftp.lip6.fr/pub/gcc/releases/gcc-6.3.0/gcc-6.3.0.tar.bz2     \
+  | tar -xj                                                                     \
+ && cd gcc-6.3.0                                                                \
+ && mkdir build && cd build                                                     \
+ && ../configure                                                                \
+    --prefix=/usr/local/avr                                                     \
+    --target=avr                                                                \
+    --enable-languages=c,c++                                                    \
+    --disable-nls                                                               \
+    --disable-libssp                                                            \
+    --with-dwarf2                                                               \
+ && make && make install                                                        \
+ && cd ../.. && rm -rf gcc-6.3.0                                                \
+ && avr-gcc --version
+
+# AVR-Libc Layer
+RUN echo "\033[1;32mBuilding AVR libc...\033[0m"                                \
+ && wget -qO- http://download.savannah.gnu.org/releases/avr-libc/avr-libc-2.0.0.tar.bz2 \
+  | tar -xj                                                                     \
+ && cd avr-libc-2.0.0                                                           \
+ && mkdir build && cd build                                                     \
+ && ../configure --prefix=/usr/local/avr --build=`../config.guess` --host=avr   \
+ && make && make install                                                        \
+ && cd ../.. && rm -rf avr-libc-2.0.0
+
+# Cleanup
+RUN echo "\033[1;32mCleaning up...\033[0m"                                      \
+ && apt-get remove -y                                                           \
+            build-essential                                                     \
+            ca-certificates                                                     \
+            libgmp3-dev                                                         \
+            libmpc-dev                                                          \
+            libmpfr-dev                                                         \
+            wget                                                                \
+ && apt-get autoremove -y                                                       \
+ && apt-get clean                                                               \
+ && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
