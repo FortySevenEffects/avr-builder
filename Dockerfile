@@ -14,19 +14,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends                
             libmpc-dev                                                          \
             libmpfr-dev                                                         \
             make                                                                \
-            wget
-
+            wget                                                                \
 # CMake Layer
-RUN echo "\033[1;32mInstalling CMake...\033[0m"                                 \
+ && echo "\033[1;32mInstalling CMake...\033[0m"                                 \
  && wget -q https://cmake.org/files/v3.7/cmake-3.7.2-Linux-x86_64.sh            \
  && mkdir -p /opt/cmake                                                         \
  && sh cmake-3.7.2-Linux-x86_64.sh --prefix=/opt/cmake --skip-license           \
  && ln -s /opt/cmake/bin/cmake /usr/local/bin/cmake                             \
  && rm cmake-3.7.2-Linux-x86_64.sh                                              \
- && cmake --version
-
+&& cmake --version                                                              \
 # Binutils layer (with avr-size patch)
-RUN echo "\033[1;32mBuilding binutils...\033[0m"                                \
+ && echo "\033[1;32mBuilding binutils...\033[0m"                                \
  && wget -qO- http://ftp.gnu.org/gnu/binutils/binutils-2.28.tar.bz2 | tar -xj   \
  && cd binutils-2.28                                                            \
  && wget -qO 01-avr-size.patch https://projects.archlinux.org/svntogit/community.git/plain/trunk/avr-size.patch?h=packages/avr-binutils \
@@ -49,10 +47,9 @@ RUN echo "\033[1;32mBuilding binutils...\033[0m"                                
  && avr-ld      -V                                                              \
  && avr-objdump --version                                                       \
  && avr-objcopy --version                                                       \
- && avr-size    --version
-
+ && avr-size    --version                                                       \
 # AVR-GCC Layer
-RUN echo "\033[1;32mBuilding AVR-GCC...\033[0m"                                 \
+ && echo "\033[1;32mBuilding AVR-GCC...\033[0m"                                 \
  && wget -qO- ftp://ftp.lip6.fr/pub/gcc/releases/gcc-6.3.0/gcc-6.3.0.tar.bz2    \
   | tar -xj                                                                     \
  && cd gcc-6.3.0                                                                \
@@ -83,17 +80,13 @@ RUN echo "\033[1;32mBuilding AVR-GCC...\033[0m"                                 
     --with-gnu-ld                                                               \
  && make && make install                                                        \
  && cd ../.. && rm -rf gcc-6.3.0                                                \
- && avr-gcc --version
-
-# Cleanup GCC (to merge with previous if successful)
-RUN echo "\033[1;32mCleaning up GCC...\033[0m"                                  \
  && find /usr/local/avr/lib -type f -name "*.a"                                 \
         -exec /usr/local/avr/bin/avr-strip --strip-debug '{}' \;                \
  && rm -rf /usr/local/avr/share/man/man7                                        \
- && rm -rf /usr/local/avr/share/info
-
+ && rm -rf /usr/local/avr/share/info                                            \
+ && avr-gcc --version                                                           \
 # AVR-Libc Layer
-RUN echo "\033[1;32mBuilding AVR libc...\033[0m"                                \
+ && echo "\033[1;32mBuilding AVR libc...\033[0m"                                \
  && wget -qO- http://download.savannah.gnu.org/releases/avr-libc/avr-libc-2.0.0.tar.bz2 \
   | tar -xj                                                                     \
  && cd avr-libc-2.0.0                                                           \
@@ -103,10 +96,9 @@ RUN echo "\033[1;32mBuilding AVR libc...\033[0m"                                
     --build=$(../config.guess)                                                  \
     --host=avr                                                                  \
  && make && make install                                                        \
- && cd ../.. && rm -rf avr-libc-2.0.0
-
+ && cd ../.. && rm -rf avr-libc-2.0.0                                           \
 # Cleanup
-RUN echo "\033[1;32mCleaning up...\033[0m"                                      \
+ && echo "\033[1;32mCleaning up...\033[0m"                                      \
  && apt-get remove --purge -y                                                   \
             build-essential                                                     \
             ca-certificates                                                     \
