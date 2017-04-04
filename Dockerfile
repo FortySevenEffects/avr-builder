@@ -86,10 +86,11 @@ RUN echo "\033[1;32mBuilding AVR-GCC...\033[0m"                                 
  && avr-gcc --version
 
 # Cleanup GCC (to merge with previous if successful)
-#RUN find /usr/local/avr/lib -type f -name "*.a"                                 \
-#        -exec /usr/local/avr/bin/avr-strip --strip-debug '{}' \;                \
-# && rm -rf /usr/local/avr/share/man/man7                                        \
-# && rm -rf /usr/local/avr/share/info                                            \
+RUN echo "\033[1;32mCleaning up GCC...\033[0m"                                  \
+ && find /usr/local/avr/lib -type f -name "*.a"                                 \
+        -exec /usr/local/avr/bin/avr-strip --strip-debug '{}' \;                \
+ && rm -rf /usr/local/avr/share/man/man7                                        \
+ && rm -rf /usr/local/avr/share/info
 
 # AVR-Libc Layer
 RUN echo "\033[1;32mBuilding AVR libc...\033[0m"                                \
