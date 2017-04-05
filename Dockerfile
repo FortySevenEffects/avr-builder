@@ -104,6 +104,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends                
  && cd ../.. && rm -rf avr-libc-2.0.0                                           \
 # Cleanup
  && echo "\033[1;32mCleaning up...\033[0m"                                      \
+ && for name in $(find /usr/local/avr/avr/bin -exec basename {} \;);            \
+        do ln -s /usr/local/avr/bin/avr-$name /usr/local/avr/bin/$name;         \
+    done                                                                        \
+ && rm -rf /usr/local/avr/avr/bin                                               \
  && apt-get remove --purge -y                                                   \
             build-essential                                                     \
             ca-certificates                                                     \
