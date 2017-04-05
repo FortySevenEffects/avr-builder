@@ -17,14 +17,19 @@ RUN apt-get update && apt-get install -y --no-install-recommends                
             wget                                                                \
 # CMake Layer
  && echo "\033[1;32mInstalling CMake...\033[0m"                                 \
- && wget -q https://cmake.org/files/v3.7/cmake-3.7.2-Linux-x86_64.sh            \
  && mkdir -p /opt/cmake                                                         \
+ && wget -q https://cmake.org/files/v3.7/cmake-3.7.2-Linux-x86_64.sh            \
  && sh cmake-3.7.2-Linux-x86_64.sh --prefix=/opt/cmake --skip-license           \
- && ln -s /opt/cmake/bin/cmake /usr/local/bin/cmake                             \
+ && ln -s /opt/cmake/bin/cmake  /usr/local/bin/cmake                            \
+ && ln -s /opt/cmake/bin/ccmake /usr/local/bin/ccmake                           \
+ && ln -s /opt/cmake/bin/ctest  /usr/local/bin/ctest                            \
+ && rm -f /opt/cmake/bin/cmake-gui                                              \
+ && rm -rf /opt/cmake/doc /otp/cmake/man                                        \
  && rm cmake-3.7.2-Linux-x86_64.sh                                              \
-&& cmake --version                                                              \
+ && cmake --version                                                             \
 # Binutils layer (with avr-size patch)
  && echo "\033[1;32mBuilding binutils...\033[0m"                                \
+ && mkdir -p /usr/local/avr                                                     \ 
  && wget -qO- http://ftp.gnu.org/gnu/binutils/binutils-2.28.tar.bz2 | tar -xj   \
  && cd binutils-2.28                                                            \
  && wget -qO 01-avr-size.patch https://projects.archlinux.org/svntogit/community.git/plain/trunk/avr-size.patch?h=packages/avr-binutils \
