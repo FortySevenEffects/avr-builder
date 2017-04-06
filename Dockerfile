@@ -2,10 +2,12 @@
 # https://github.com/vyivanov/avr-docker/blob/master/Dockerfile
 # https://github.com/NicoHood/AVR-Development-Environment-Script/blob/master/build.sh
 # Updated with latest versions of each tool (at the time of writing).
+# Note: avrdude is not present as not all Docker environments can forward the USB
+# stack of the host to the VM (macOS). It will have to be installed on the host.
 
 FROM debian:jessie
 
-ENV PATH $PATH:/usr/local/avr/bin:/usr/local/bin
+ENV PATH /usr/local/avr/bin:$PATH
 
 RUN apt-get update && apt-get install -y --no-install-recommends                \
             build-essential                                                     \
@@ -29,7 +31,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends                
  && cmake --version                                                             \
 # Binutils layer (with avr-size patch)
  && echo "\033[1;32mBuilding binutils...\033[0m"                                \
- && mkdir -p /usr/local/avr                                                     \ 
+ && mkdir -p /usr/local/avr                                                     \
  && wget -qO- http://ftp.gnu.org/gnu/binutils/binutils-2.28.tar.bz2 | tar -xj   \
  && cd binutils-2.28                                                            \
  && wget -qO 01-avr-size.patch https://projects.archlinux.org/svntogit/community.git/plain/trunk/avr-size.patch?h=packages/avr-binutils \
@@ -115,5 +117,3 @@ RUN apt-get update && apt-get install -y --no-install-recommends                
  && apt-get autoremove -y                                                       \
  && apt-get clean                                                               \
  && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-
-WORKDIR /build
