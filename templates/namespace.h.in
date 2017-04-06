@@ -1,0 +1,10 @@
+#pragma once
+
+#define @NAMESPACE_DEF@_NAMESPACE               @namespace@
+#define BEGIN_@NAMESPACE_DEF@_NAMESPACE         namespace @namespace@ {
+#define END_@NAMESPACE_DEF@_NAMESPACE           };
+#define USING_@NAMESPACE_DEF@_NAMESPACE         using namespace @namespace@;
+
+// Forward declare the @NAMESPACE_DEF@ namespace
+// so that IDE completion engines can pick it up more easily.
+namespace @NAMESPACE_DEF@ {};
