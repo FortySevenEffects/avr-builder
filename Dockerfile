@@ -9,6 +9,12 @@ FROM debian:jessie
 
 ENV PATH /usr/local/avr/bin:$PATH
 
+LABEL                   \
+    cmake="3.10.1"      \
+    binutils="2.29.1"   \
+    avrgcc="7.2.0"      \
+    avrlibc="2.0.0"
+
 RUN apt-get update && apt-get install -y --no-install-recommends                \
             build-essential                                                     \
             ca-certificates                                                     \
@@ -20,20 +26,20 @@ RUN apt-get update && apt-get install -y --no-install-recommends                
 # CMake Layer
  && echo "\033[1;32mInstalling CMake...\033[0m"                                 \
  && mkdir -p /opt/cmake                                                         \
- && wget -q https://cmake.org/files/v3.7/cmake-3.7.2-Linux-x86_64.sh            \
- && sh cmake-3.7.2-Linux-x86_64.sh --prefix=/opt/cmake --skip-license           \
+ && wget -q https://cmake.org/files/v3.10/cmake-3.10.1-Linux-x86_64.sh          \
+ && sh cmake-3.10.1-Linux-x86_64.sh --prefix=/opt/cmake --skip-license          \
  && ln -s /opt/cmake/bin/cmake  /usr/local/bin/cmake                            \
  && ln -s /opt/cmake/bin/ccmake /usr/local/bin/ccmake                           \
  && ln -s /opt/cmake/bin/ctest  /usr/local/bin/ctest                            \
  && rm -f /opt/cmake/bin/cmake-gui                                              \
  && rm -rf /opt/cmake/doc /otp/cmake/man                                        \
- && rm cmake-3.7.2-Linux-x86_64.sh                                              \
+ && rm cmake-3.10.1-Linux-x86_64.sh                                             \
  && cmake --version                                                             \
 # Binutils layer (with avr-size patch)
  && echo "\033[1;32mBuilding binutils...\033[0m"                                \
  && mkdir -p /usr/local/avr                                                     \
- && wget -qO- http://ftp.gnu.org/gnu/binutils/binutils-2.28.tar.bz2 | tar -xj   \
- && cd binutils-2.28                                                            \
+ && wget -qO- http://ftp.gnu.org/gnu/binutils/binutils-2.29.1.tar.bz2 | tar -xj \
+ && cd binutils-2.29.1                                                          \
  && wget -qO 01-avr-size.patch https://projects.archlinux.org/svntogit/community.git/plain/trunk/avr-size.patch?h=packages/avr-binutils \
  && patch -Np0 < 01-avr-size.patch                                              \
  && mkdir build && cd build                                                     \
@@ -50,16 +56,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends                
     --disable-shared                                                            \
     --disable-multilib                                                          \
  && make && make install                                                        \
- && cd ../.. && rm -rf binutils-2.28                                            \
+ && cd ../.. && rm -rf binutils-2.29.1                                          \
  && avr-ld      -V                                                              \
  && avr-objdump --version                                                       \
  && avr-objcopy --version                                                       \
  && avr-size    --version                                                       \
 # AVR-GCC Layer
  && echo "\033[1;32mBuilding AVR-GCC...\033[0m"                                 \
- && wget -qO- ftp://ftp.lip6.fr/pub/gcc/releases/gcc-6.3.0/gcc-6.3.0.tar.bz2    \
-  | tar -xj                                                                     \
- && cd gcc-6.3.0                                                                \
+ && wget -qO- ftp://ftp.lip6.fr/pub/gcc/releases/gcc-7.2.0/gcc-7.2.0.tar.gz     \
+  | tar -xz                                                                     \
+ && cd gcc-7.2.0                                                                \
  && mkdir build && cd build                                                     \
  && ../configure                                                                \
     --prefix=/usr/local/avr                                                     \
@@ -86,7 +92,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends                
     --with-dwarf2                                                               \
     --with-gnu-ld                                                               \
  && make && make install                                                        \
- && cd ../.. && rm -rf gcc-6.3.0                                                \
+ && cd ../.. && rm -rf gcc-7.2.0                                                \
  && find /usr/local/avr/lib -type f -name "*.a"                                 \
         -exec /usr/local/avr/bin/avr-strip --strip-debug '{}' \;                \
  && rm -rf /usr/local/avr/share/man/man7                                        \
